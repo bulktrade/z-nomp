@@ -54,7 +54,6 @@ module.exports = function(logger){
     var keyScriptTemplate = '';
     var keyScriptProcessed = '';
 
-
     var processTemplates = function(){
 
         for (var pageName in pageTemplates){
@@ -135,6 +134,9 @@ module.exports = function(logger){
         async.waterfall([
             function(callback){
                 var client = redis.createClient(portalConfig.redis.port, portalConfig.redis.host);
+                if (portalConfig.redis.password) {
+                    client.auth(portalConfig.redis.password);
+                }
                 client.hgetall('coinVersionBytes', function(err, coinBytes){
                     if (err){
                         client.quit();
@@ -228,6 +230,7 @@ module.exports = function(logger){
 			address = address.split(".")[0];
             portalStats.getBalanceByAddress(address, function(){
                 processTemplates();
+		res.header('Content-Type', 'text/html');
                 res.end(indexesProcessed['miner_stats']);
             });
         }
@@ -301,8 +304,8 @@ module.exports = function(logger){
     //app.get('/stats/shares/:coin', usershares);
     //app.get('/stats/shares', shares);
 	//app.get('/payout/:address', payout);
-	app.get('/workers/:address', minerpage);
-
+    app.use(compress());
+    app.get('/workers/:address', minerpage);
     app.get('/:page', route);
     app.get('/', route);
 
